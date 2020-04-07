@@ -1,0 +1,64 @@
+﻿@model IEnumerable<PlagiarismCheckingSystem.Models.LaboratoryWork>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Title)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Files)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Similarity)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Title)
+                </td>
+                <td>
+                    <ul>
+                        @foreach (var file in item.Files)
+                        {
+                            <li>
+                                @Html.DisplayFor(modelItem => file.Name)
+                                <ul>
+                                    @foreach (var similarity in file.Similarities)
+                                    {
+                                    <li>
+                                        @Html.ActionLink("Переглянути файл", "DetailsFile", new { Id = similarity.SimilarityToId, AnotherId = similarity.File.Id })
+                                        @($"Збіг {similarity.Value * 100} %")
+                                    </li>
+                                    }
+                                </ul>
+                            </li>
+                        }
+                    </ul>
+                </td>
+                <td>
+                    @($"Загальний результат {item.Similarity * 100} %")
+                </td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                    <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                    <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -1,0 +1,20 @@
+﻿@model PlagiarismCheckingSystem.Models.File
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<h1>Details</h1>
+
+<div>
+    <h4>LaboratoryWork</h4>
+    <hr />
+    <dl class="row">
+    </dl>
+    <div>
+        @Html.Raw((@ViewData["diff"]))
+    </div>
+</div>
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
