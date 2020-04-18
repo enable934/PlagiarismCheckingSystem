@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -10,7 +6,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using PlagiarismCheckingSystem.Data;
+using PlagiarismCheckingSystem.Repository;
 using PlagiarismCheckingSystem.Services;
+using PlagiarismCheckingSystem.Util;
 
 namespace PlagiarismCheckingSystem
 {
@@ -27,9 +25,9 @@ namespace PlagiarismCheckingSystem
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllersWithViews();
-            services.AddTransient<IStreamFetcher, MemoryStreamFetcher>();
             services.AddTransient<ICharacterEncoder, ASCIIEncoder>();
             services.AddTransient<IPlagiarismDetector, UDiffPlagiarismDetector>();
+            services.AddTransient<UnitOfWork>();
             services.AddDbContext<Context>(options => options.UseSqlServer(Configuration.GetConnectionString("Context")).UseLazyLoadingProxies());
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(options => //CookieAuthenticationOptions
@@ -37,6 +35,7 @@ namespace PlagiarismCheckingSystem
                     options.LoginPath = new Microsoft.AspNetCore.Http.PathString("/Account/Login");
                 });
             services.AddControllersWithViews();
+            IOCContainer.Register<IStreamFetcher, MemoryStreamFetcher>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

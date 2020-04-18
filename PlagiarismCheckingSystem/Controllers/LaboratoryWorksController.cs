@@ -8,9 +8,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using PlagiarismCheckingSystem.Data;
 using PlagiarismCheckingSystem.Models;
+using PlagiarismCheckingSystem.Repository;
 using PlagiarismCheckingSystem.Services;
+using PlagiarismCheckingSystem.Util;
 using File = PlagiarismCheckingSystem.Models.File;
 
 namespace PlagiarismCheckingSystem.Controllers
@@ -18,23 +19,23 @@ namespace PlagiarismCheckingSystem.Controllers
     [Authorize]
     public class LaboratoryWorksController : Controller
     {
-        private readonly Context _context;
         private readonly IStreamFetcher _streamFetcher;
         private readonly ICharacterEncoder _encoder;
         private readonly IPlagiarismDetector _plagiarismDetector;
+        private readonly UnitOfWork _unitOfWork;
 
-        public LaboratoryWorksController(Context context, IStreamFetcher streamFetcher, ICharacterEncoder encoder, IPlagiarismDetector plagiarismDetector)
+        public LaboratoryWorksController(ICharacterEncoder encoder, IPlagiarismDetector plagiarismDetector, UnitOfWork unitOfWork)
         {
-            _context = context;
-            _streamFetcher = streamFetcher;
+            _streamFetcher = IOCContainer.Resolve<IStreamFetcher>();
             _encoder = encoder;
             _plagiarismDetector = plagiarismDetector;
+            _unitOfWork = unitOfWork;
         }
 
         // GET: LaboratoryWorks
         public async Task<IActionResult> Index()
         {
-            return View(await _context.LaboratoryWork.Where(laboratoryWork => (laboratoryWork.User.Email == User.Identity.Name)).ToListAsync());
+            return View(_unitOfWork.LaboratoryWorkRepository.Get(filter: laboratoryWork => (laboratoryWork.User.Email == User.Identity.Name)));
         }
 
         // GET: LaboratoryWorks/Details/5
@@ -45,8 +46,7 @@ namespace PlagiarismCheckingSystem.Controllers
                 return NotFound();
             }
 
-            var laboratoryWork = await _context.LaboratoryWork
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var laboratoryWork = _unitOfWork.LaboratoryWorkRepository.Get(filter: m => m.Id == id).FirstOrDefault();
             if (laboratoryWork == null)
             {
                 return NotFound();
@@ -65,10 +65,8 @@ namespace PlagiarismCheckingSystem.Controllers
                 return NotFound();
             }
 
-            var file = await _context.Files
-                .FirstOrDefaultAsync(m => m.Id == id);
-            var anotherFile = await _context.Files
-                .FirstOrDefaultAsync(m => m.Id == anotherId);
+            var file = _unitOfWork.FileRepository.Get(filter: m => m.Id == id).FirstOrDefault();
+            var anotherFile = _unitOfWork.FileRepository.Get(filter: m => m.Id == anotherId).FirstOrDefault();
             if (file == null || anotherFile == null)
             {
                 return NotFound();
@@ -93,7 +91,7 @@ namespace PlagiarismCheckingSystem.Controllers
         {
             if (ModelState.IsValid)
             {
-                laboratoryWork.User = await _context.Users.FirstOrDefaultAsync(user => (user.Email == User.Identity.Name));
+                laboratoryWork.User = _unitOfWork.UserRepository.Get(filter: user => (user.Email == User.Identity.Name)).FirstOrDefault();
                 foreach (var item in files)
                 {
                     if (item.Length > 0)
@@ -111,8 +109,8 @@ namespace PlagiarismCheckingSystem.Controllers
                 Dictionary<LaboratoryWork, List<Similarity>> similarities = _plagiarismDetector.FindAndSaveSimilarities(laboratoryWork);
                 decimal plagiarismValue = _plagiarismDetector.CalculatePlagiarism(similarities);
                 laboratoryWork.Similarity = plagiarismValue;
-                _context.Add(laboratoryWork);
-                await _context.SaveChangesAsync();
+                _unitOfWork.LaboratoryWorkRepository.Insert(laboratoryWork);
+                _unitOfWork.Save();
                 return RedirectToAction(nameof(Index));
             }
             return View(laboratoryWork);
@@ -126,7 +124,7 @@ namespace PlagiarismCheckingSystem.Controllers
                 return NotFound();
             }
 
-            var laboratoryWork = await _context.LaboratoryWork.FirstOrDefaultAsync(laboratoryWork => (laboratoryWork.Id == id && laboratoryWork.User.Email == User.Identity.Name));
+            var laboratoryWork = _unitOfWork.LaboratoryWorkRepository.Get(filter: laboratoryWork => (laboratoryWork.Id == id && laboratoryWork.User.Email == User.Identity.Name)).FirstOrDefault();
             if (laboratoryWork == null)
             {
                 return NotFound();
@@ -150,12 +148,12 @@ namespace PlagiarismCheckingSystem.Controllers
             {
                 try
                 {
-                    _context.Update(laboratoryWork);
-                    await _context.SaveChangesAsync();
+                    _unitOfWork.LaboratoryWorkRepository.Update(laboratoryWork);
+                    _unitOfWork.Save();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!LaboratoryWorkExists(laboratoryWork.Id))
+                    if (!_unitOfWork.LaboratoryWorkRepository.IsExists(laboratoryWork => laboratoryWork.Id == laboratoryWork.Id))
                     {
                         return NotFound();
                     }
@@ -177,8 +175,8 @@ namespace PlagiarismCheckingSystem.Controllers
                 return NotFound();
             }
 
-            var laboratoryWork = await _context.LaboratoryWork
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var laboratoryWork = _unitOfWork.LaboratoryWorkRepository
+                .Get(filter: m => m.Id == id).FirstOrDefault();
             if (laboratoryWork == null)
             {
                 return NotFound();
@@ -192,15 +190,12 @@ namespace PlagiarismCheckingSystem.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var laboratoryWork = await _context.LaboratoryWork.FindAsync(id);
-            _context.LaboratoryWork.Remove(laboratoryWork);
-            await _context.SaveChangesAsync();
+            var laboratoryWork = _unitOfWork.LaboratoryWorkRepository.GetByID(id);
+            _unitOfWork.LaboratoryWorkRepository.Delete(laboratoryWork);
+            _unitOfWork.Save();
             return RedirectToAction(nameof(Index));
         }
 
-        private bool LaboratoryWorkExists(int id)
-        {
-            return _context.LaboratoryWork.Any(e => e.Id == id);
-        }
+
     }
 }
