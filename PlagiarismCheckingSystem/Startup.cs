@@ -28,6 +28,9 @@ namespace PlagiarismCheckingSystem
             services.AddTransient<ICharacterEncoder, ASCIIEncoder>();
             services.AddTransient<IPlagiarismDetector, UDiffPlagiarismDetector>();
             services.AddTransient<UnitOfWork>();
+            services.AddTransient<LaboratoryWorkService>();
+            services.AddTransient<UserService>();
+            services.AddTransient<FileService>();
             services.AddDbContext<Context>(options => options.UseSqlServer(Configuration.GetConnectionString("Context")).UseLazyLoadingProxies());
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(options => //CookieAuthenticationOptions

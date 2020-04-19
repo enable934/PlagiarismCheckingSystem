@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PlagiarismCheckingSystem.Data;
 using PlagiarismCheckingSystem.Models;
+using PlagiarismCheckingSystem.Services;
 using PlagiarismCheckingSystem.ViewModels;
 using System.Collections.Generic;
 using System.Security.Claims;
@@ -13,10 +14,10 @@ namespace PlagiarismCheckingSystem.Controllers
 {
     public class AccountController : Controller
     {
-        private Context db;
-        public AccountController(Context context)
+        private UserService _userService;
+        public AccountController(UserService userService)
         {
-            db = context;
+            _userService = userService;
         }
         [HttpGet]
         public IActionResult Login()
@@ -29,7 +30,7 @@ namespace PlagiarismCheckingSystem.Controllers
         {
             if (ModelState.IsValid)
             {
-                User user = await db.Users.FirstOrDefaultAsync(u => u.Email == model.Email && u.Password == model.Password);
+                User user = _userService.GetUserByEmailAndLogin(model.Email, model.Password);
                 if (user != null)
                 {
                     await Authenticate(model.Email); // аутентификация
@@ -51,12 +52,11 @@ namespace PlagiarismCheckingSystem.Controllers
         {
             if (ModelState.IsValid)
             {
-                User user = await db.Users.FirstOrDefaultAsync(u => u.Email == model.Email);
+                User user = _userService.GetUser(model.Email);
                 if (user == null)
                 {
                     // добавляем пользователя в бд
-                    db.Users.Add(new User { Email = model.Email, Password = model.Password });
-                    await db.SaveChangesAsync();
+                    _userService.Register(model);
 
                     await Authenticate(model.Email); // аутентификация
 

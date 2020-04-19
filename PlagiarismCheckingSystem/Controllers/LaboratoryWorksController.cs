@@ -19,23 +19,22 @@ namespace PlagiarismCheckingSystem.Controllers
     [Authorize]
     public class LaboratoryWorksController : Controller
     {
-        private readonly IStreamFetcher _streamFetcher;
-        private readonly ICharacterEncoder _encoder;
+        private readonly LaboratoryWorkService _laboratoryWorkService;
+        private readonly FileService _fileService;
         private readonly IPlagiarismDetector _plagiarismDetector;
-        private readonly UnitOfWork _unitOfWork;
 
-        public LaboratoryWorksController(ICharacterEncoder encoder, IPlagiarismDetector plagiarismDetector, UnitOfWork unitOfWork)
+        public LaboratoryWorksController(LaboratoryWorkService laboratoryWorkService, FileService fileService, IPlagiarismDetector plagiarismDetector)
         {
-            _streamFetcher = IOCContainer.Resolve<IStreamFetcher>();
-            _encoder = encoder;
+            
+            _laboratoryWorkService = laboratoryWorkService;
+            _fileService = fileService;
             _plagiarismDetector = plagiarismDetector;
-            _unitOfWork = unitOfWork;
         }
 
         // GET: LaboratoryWorks
         public async Task<IActionResult> Index()
         {
-            return View(_unitOfWork.LaboratoryWorkRepository.Get(filter: laboratoryWork => (laboratoryWork.User.Email == User.Identity.Name)));
+            return View(_laboratoryWorkService.GetLaboratoryWorksByUser(User.Identity.Name));
         }
 
         // GET: LaboratoryWorks/Details/5
@@ -45,8 +44,7 @@ namespace PlagiarismCheckingSystem.Controllers
             {
                 return NotFound();
             }
-
-            var laboratoryWork = _unitOfWork.LaboratoryWorkRepository.Get(filter: m => m.Id == id).FirstOrDefault();
+            var laboratoryWork = _laboratoryWorkService.GetLaboratoryWorkById(id);
             if (laboratoryWork == null)
             {
                 return NotFound();
@@ -65,8 +63,8 @@ namespace PlagiarismCheckingSystem.Controllers
                 return NotFound();
             }
 
-            var file = _unitOfWork.FileRepository.Get(filter: m => m.Id == id).FirstOrDefault();
-            var anotherFile = _unitOfWork.FileRepository.Get(filter: m => m.Id == anotherId).FirstOrDefault();
+            var file = _fileService.GetFileById(id);
+            var anotherFile = _fileService.GetFileById(anotherId);
             if (file == null || anotherFile == null)
             {
                 return NotFound();
@@ -91,26 +89,7 @@ namespace PlagiarismCheckingSystem.Controllers
         {
             if (ModelState.IsValid)
             {
-                laboratoryWork.User = _unitOfWork.UserRepository.Get(filter: user => (user.Email == User.Identity.Name)).FirstOrDefault();
-                foreach (var item in files)
-                {
-                    if (item.Length > 0)
-                    {
-                        var stream = _streamFetcher.GetArray(item);
-                        var file = new File
-                        {
-                            Content = _encoder.Encode(stream),
-                            Name = item.FileName,
-                            LaboratoryWork = laboratoryWork
-                        };
-                        laboratoryWork.Files.Add(file);
-                    }
-                }
-                Dictionary<LaboratoryWork, List<Similarity>> similarities = _plagiarismDetector.FindAndSaveSimilarities(laboratoryWork);
-                decimal plagiarismValue = _plagiarismDetector.CalculatePlagiarism(similarities);
-                laboratoryWork.Similarity = plagiarismValue;
-                _unitOfWork.LaboratoryWorkRepository.Insert(laboratoryWork);
-                _unitOfWork.Save();
+                _laboratoryWorkService.Create(laboratoryWork, User.Identity.Name, files);
                 return RedirectToAction(nameof(Index));
             }
             return View(laboratoryWork);
@@ -124,7 +103,7 @@ namespace PlagiarismCheckingSystem.Controllers
                 return NotFound();
             }
 
-            var laboratoryWork = _unitOfWork.LaboratoryWorkRepository.Get(filter: laboratoryWork => (laboratoryWork.Id == id && laboratoryWork.User.Email == User.Identity.Name)).FirstOrDefault();
+            var laboratoryWork = _laboratoryWorkService.GetLaboratoryWorkByIdAndUser(id, User.Identity.Name);
             if (laboratoryWork == null)
             {
                 return NotFound();
@@ -148,12 +127,11 @@ namespace PlagiarismCheckingSystem.Controllers
             {
                 try
                 {
-                    _unitOfWork.LaboratoryWorkRepository.Update(laboratoryWork);
-                    _unitOfWork.Save();
+                    _laboratoryWorkService.Update(laboratoryWork);
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!_unitOfWork.LaboratoryWorkRepository.IsExists(laboratoryWork => laboratoryWork.Id == laboratoryWork.Id))
+                    if (!_laboratoryWorkService.IsExists(id))
                     {
                         return NotFound();
                     }
@@ -175,8 +153,7 @@ namespace PlagiarismCheckingSystem.Controllers
                 return NotFound();
             }
 
-            var laboratoryWork = _unitOfWork.LaboratoryWorkRepository
-                .Get(filter: m => m.Id == id).FirstOrDefault();
+            var laboratoryWork = _laboratoryWorkService.GetLaboratoryWorkById(id);
             if (laboratoryWork == null)
             {
                 return NotFound();
@@ -190,9 +167,7 @@ namespace PlagiarismCheckingSystem.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var laboratoryWork = _unitOfWork.LaboratoryWorkRepository.GetByID(id);
-            _unitOfWork.LaboratoryWorkRepository.Delete(laboratoryWork);
-            _unitOfWork.Save();
+            _laboratoryWorkService.Delete(id);
             return RedirectToAction(nameof(Index));
         }
 
