@@ -80,7 +80,7 @@ namespace PlagiarismCheckingSystem.Services
 
         public bool IsExists(int id)
         {
-            return _unitOfWork.LaboratoryWorkRepository.IsExists(laboratoryWork => laboratoryWork.Id == laboratoryWork.Id);
+            return _unitOfWork.LaboratoryWorkRepository.IsExists(laboratoryWork => laboratoryWork.Id == id);
         }
     }
 }
