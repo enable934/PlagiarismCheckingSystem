@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlagiarismCheckingSystem", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XUnitTesting", "XUnitTesting\XUnitTesting.csproj", "{743C897E-6705-4696-B13E-1F29D03CD77C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XUnitRazorPageTesting", "XUnitRazorPageTesting\XUnitRazorPageTesting.csproj", "{3F452E2B-E9F1-497E-B758-412929880841}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{743C897E-6705-4696-B13E-1F29D03CD77C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{743C897E-6705-4696-B13E-1F29D03CD77C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{743C897E-6705-4696-B13E-1F29D03CD77C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3F452E2B-E9F1-497E-B758-412929880841}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3F452E2B-E9F1-497E-B758-412929880841}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3F452E2B-E9F1-497E-B758-412929880841}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3F452E2B-E9F1-497E-B758-412929880841}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
