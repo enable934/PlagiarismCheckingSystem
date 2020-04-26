@@ -30,8 +30,7 @@ namespace PlagiarismCheckingSystem.Controllers
         {
             if (ModelState.IsValid)
             {
-                User user = _userService.GetUserByEmailAndLogin(model.Email, model.Password);
-                if (user != null)
+                if (_userService.GetUserByEmailAndLogin(model.Email, model.Password) != null)
                 {
                     await Authenticate(model.Email); // аутентификация
 
@@ -52,13 +51,11 @@ namespace PlagiarismCheckingSystem.Controllers
         {
             if (ModelState.IsValid)
             {
-                User user = _userService.GetUser(model.Email);
-                if (user == null)
+                if (_userService.GetUser(model.Email) == null)
                 {
-                    // добавляем пользователя в бд
                     _userService.Register(model);
 
-                    await Authenticate(model.Email); // аутентификация
+                    await Authenticate(model.Email);
 
                     return RedirectToAction("Index", "LaboratoryWorks");
                 }

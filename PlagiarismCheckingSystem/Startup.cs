@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -6,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using PlagiarismCheckingSystem.Data;
+using PlagiarismCheckingSystem.Mapping;
 using PlagiarismCheckingSystem.Repository;
 using PlagiarismCheckingSystem.Services;
 using PlagiarismCheckingSystem.Util;
@@ -31,6 +33,7 @@ namespace PlagiarismCheckingSystem
             services.AddTransient<LaboratoryWorkService>();
             services.AddTransient<UserService>();
             services.AddTransient<FileService>();
+            services.AddAutoMapper(typeof(LaboratoryWorkProfile));
             services.AddDbContext<Context>(options => options.UseSqlServer(Configuration.GetConnectionString("Context")).UseLazyLoadingProxies());
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(options => //CookieAuthenticationOptions

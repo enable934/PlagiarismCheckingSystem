@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using PlagiarismCheckingSystem.Models;
 using PlagiarismCheckingSystem.Repository;
 using PlagiarismCheckingSystem.Util;
+using PlagiarismCheckingSystem.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,33 +18,36 @@ namespace PlagiarismCheckingSystem.Services
         private readonly IStreamFetcher _streamFetcher;
         private readonly ICharacterEncoder _encoder;
         private readonly IPlagiarismDetector _plagiarismDetector;
-        public LaboratoryWorkService(UnitOfWork unitOfWork, UserService userService, ICharacterEncoder encoder, IPlagiarismDetector plagiarismDetector)
+        private readonly IMapper _mapper;
+        public LaboratoryWorkService(UnitOfWork unitOfWork, UserService userService, ICharacterEncoder encoder, IPlagiarismDetector plagiarismDetector, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
             _userService = userService;
             _streamFetcher = IOCContainer.Resolve<IStreamFetcher>();
             _encoder = encoder;
             _plagiarismDetector = plagiarismDetector;
+            _mapper = mapper;
         }
 
-        public IEnumerable<LaboratoryWork> GetLaboratoryWorksByUser(string userName)
+        public IEnumerable<LaboratoryWorkModel> GetLaboratoryWorksByUser(string userName)
         {
-            return _unitOfWork.LaboratoryWorkRepository.Get(filter: laboratoryWork => laboratoryWork.User.Email == userName);
+            return _mapper.Map<LaboratoryWork[], IEnumerable<LaboratoryWorkModel>>(_unitOfWork.LaboratoryWorkRepository.Get(filter: laboratoryWork => laboratoryWork.User.Email == userName).ToArray());
         }
 
-        public LaboratoryWork? GetLaboratoryWorkById(int? id)
+        public LaboratoryWorkModel? GetLaboratoryWorkById(int? id)
         {
-            return _unitOfWork.LaboratoryWorkRepository.Get(filter: m => m.Id == id).FirstOrDefault();
+            return _mapper.Map<LaboratoryWorkModel>(_unitOfWork.LaboratoryWorkRepository.Get(filter: m => m.Id == id).FirstOrDefault());
         }
 
 
-        public LaboratoryWork? GetLaboratoryWorkByIdAndUser(int? id, string name)
+        public LaboratoryWorkModel? GetLaboratoryWorkByIdAndUser(int? id, string name)
         {
-            return _unitOfWork.LaboratoryWorkRepository.Get(filter: laboratoryWork => laboratoryWork.Id == id && laboratoryWork.User.Email == name).FirstOrDefault();
+            return _mapper.Map<LaboratoryWorkModel>(_unitOfWork.LaboratoryWorkRepository.Get(filter: laboratoryWork => laboratoryWork.Id == id && laboratoryWork.User.Email == name).FirstOrDefault());
         }
 
-        public void Create(LaboratoryWork laboratoryWork, string userName, List<IFormFile> files)
+        public void Create(LaboratoryWorkModel laboratoryWorkModel, string userName, List<IFormFile> files)
         {
+            LaboratoryWork laboratoryWork = _mapper.Map<LaboratoryWork>(laboratoryWorkModel);
             laboratoryWork.User = _userService.GetUser(userName);
                 foreach (var item in files)
             {
@@ -65,8 +70,10 @@ namespace PlagiarismCheckingSystem.Services
             _unitOfWork.Save();
         }
 
-        public void Update(LaboratoryWork laboratoryWork)
+        public void Update(LaboratoryWorkModel laboratoryWorkModel)
         {
+            var laboratoryWork = _unitOfWork.LaboratoryWorkRepository.GetByID(laboratoryWorkModel.Id);
+            laboratoryWork.Title = laboratoryWorkModel.Title;
             _unitOfWork.LaboratoryWorkRepository.Update(laboratoryWork);
             _unitOfWork.Save();
         }

@@ -1,18 +1,12 @@
 ﻿using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using DiffMatchPatch;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PlagiarismCheckingSystem.Models;
-using PlagiarismCheckingSystem.Repository;
 using PlagiarismCheckingSystem.Services;
-using PlagiarismCheckingSystem.Util;
-using File = PlagiarismCheckingSystem.Models.File;
+using PlagiarismCheckingSystem.ViewModels;
 
 namespace PlagiarismCheckingSystem.Controllers
 {
@@ -85,7 +79,7 @@ namespace PlagiarismCheckingSystem.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Title")] LaboratoryWork laboratoryWork, List<IFormFile> files)
+        public async Task<IActionResult> Create([Bind("Id,Title")] LaboratoryWorkModel laboratoryWork, List<IFormFile> files)
         {
             if (ModelState.IsValid)
             {
@@ -116,7 +110,7 @@ namespace PlagiarismCheckingSystem.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Title")] LaboratoryWork laboratoryWork)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Title")] LaboratoryWorkModel laboratoryWork)
         {
             if (id != laboratoryWork.Id)
             {
